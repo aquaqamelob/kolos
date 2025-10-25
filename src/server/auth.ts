@@ -43,8 +43,12 @@ export const signOut = async () => {
 export const signIn = async () => {
     return await auth.api.signInSocial({body: {
         provider: "google",
-        newUserCallbackURL: "http://localhost:3000/",
+        newUserCallbackURL: "https://kolos-eosin.vercel.app",
 
-        callbackURL: "http://localhost:3000"
+        callbackURL: "https://kolos-eosin.vercel.app"
+
+        // newUserCallbackURL: "http://localhost:3000/",
+
+        // callbackURL: "http://localhost:3000"
     }})
 }
