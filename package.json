@@ -37,6 +37,7 @@
 		"@upstash/vector": "^1.2.2",
 		"better-auth": "^1.2.10",
 		"clsx": "^2.1.1",
+		"d3": "^7.9.0",
 		"file-type": "^21.0.0",
 		"framer-motion": "^12.19.1",
 		"langchain": "^1.0.1",
