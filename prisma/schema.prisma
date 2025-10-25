@@ -1,0 +1,131 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  sessions      Session[]
+  accounts      Account[]
+
+  pdfs      Pdf[] 
+  chats     Chat[]    // <-- add this
+  quizzes   Quiz[]    // <-- add this
+
+ 
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+model Pdf {
+  id          String   @id @default(cuid())
+  filename    String
+  s3Key       String
+  contentType String?
+  size        Int?
+  userId      String
+  uploadedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Chat {
+  id        String    @id @default(cuid())
+  title     String?
+  userId    String
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  messages  Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  role      String   // "user" | "assistant"
+  content   String
+  meta      Json?    // optional: embeddings, tokens, etc.
+  createdAt DateTime @default(now())
+
+  chat      Chat     @relation(fields: [chatId], references: [id])
+}
+
+model Quiz {
+  id        String         @id @default(cuid())
+  title     String
+  userId    String
+  createdAt DateTime       @default(now())
+
+  user      User           @relation(fields: [userId], references: [id])
+  questions QuizQuestion[]
+}
+
+model QuizQuestion {
+  id            String   @id @default(cuid())
+  quizId        String
+  idx           Int
+  question      String
+  answers       Json     // store as JSON array of 4 strings
+  correctAnswer String
+
+  quiz          Quiz     @relation(fields: [quizId], references: [id])
+
+  @@unique([quizId, idx])
+}
