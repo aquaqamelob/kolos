@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Heading, Subheading } from "~/components/ui/heading";
 import { Strong, Text } from "~/components/ui/text";
 import { api } from "~/trpc/react";
+import { getChatResponse } from "./actions";
 
 export default function AppPage() {
   const params = useSearchParams();
@@ -30,21 +31,30 @@ export default function AppPage() {
   }, [getChat.data, id]);
 
   async function callAI(payload: { role: "user" | "assistant"; content: string }[]) {
+    // Try server action first
     try {
-      const res = await fetch("/api/chat/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: payload }),
-      });
-      if (!res.ok) {
-        console.error("AI call failed", await res.text());
+      const reply = await getChatResponse(payload);
+      if (typeof reply === "string") return reply;
+      return null;
+    } catch (err) {
+      console.error("getChatResponse error, falling back to /api/chat/ai:", err);
+      // fallback to existing fetch-based API route
+      try {
+        const res = await fetch("/api/chat/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: payload }),
+        });
+        if (!res.ok) {
+          console.error("AI call failed", await res.text());
+          return null;
+        }
+        const { reply } = await res.json();
+        return reply as string | null;
+      } catch (err2) {
+        console.error("AI call error:", err2);
         return null;
       }
-      const { reply } = await res.json();
-      return reply as string | null;
-    } catch (err) {
-      console.error("AI call error:", err);
-      return null;
     }
   }
 
